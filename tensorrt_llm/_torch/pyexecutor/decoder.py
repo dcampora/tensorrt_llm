@@ -405,7 +405,9 @@ class TRTLLMDecoder(Decoder):
         self.max_attention_window = max_attn_window if max_attn_window is not None else executor_config.max_seq_len
         self.max_num_sequences = mapping.pp_size * self.executor_config.max_batch_size
         self.max_seq_idle_microseconds = 180 * 1000 * 1000
-        self.max_decoding_tokens = 1  # It must be 1 when not in speculative decoding
+
+        # TODO: When we support speculative decoding, set to 1 + self.spec_config.max_draft_tokens
+        self.max_decoding_tokens = 1 
 
         self.world_config = WorldConfig.mpi(mapping.gpus_per_node,
                                             mapping.tp_size, mapping.pp_size)
@@ -519,13 +521,31 @@ class TRTLLMDecoder(Decoder):
                 self.model_config, self.store["decoder_buffers"],
                 self.store["buffer_manager"], self.algs.decoder, False,
                 decoder_finish_event)
+        
+        # NOTE: The following code prepares a new_tokens_device_tensor in accordance with the
+        #       current implementation of model_engine.
+        # TODO: When we support speculative decoding:
+        # new_tokens_device_tensor should be, for speculative decoding cases: [batch, 1 + draft_len], others: [batch]
+        new_tokens_device_tensor = torch.empty((self.batch_size * self.beam_width, ),
+                                         dtype=torch.int,
+                                         device='cuda')
+        for idx, request in enumerate(itertools.chain(scheduled_requests.context_requests,
+                                       scheduled_requests.generation_requests)):
+            seq_slot = request.seq_slot
+            for beam in range(self.beam_width):
+                new_tokens_device_tensor[idx * self.beam_width + beam].copy_(self.store["decoder_buffers"].new_output_tokens[0][seq_slot][beam],
+                                            non_blocking=True)
 
         new_tokens_device = {
-            "new_tokens_device": self.store["decoder_buffers"].new_output_tokens
+            "new_tokens_device": new_tokens_device_tensor
         }
+
+        # TODO: Instead of cloning, which is unsafe, we should
+        #       do the copy that was in update_decoder_buffers here into new
+        #       tensors in a non-blocking manner and return them.
         new_tokens_host = OrderedDict({
             "new_tokens_host":
-            self.store["decoder_buffers"].new_output_tokens_host,
+            self.store["decoder_buffers"].new_output_tokens_host.clone(),
             "finished_sum_host":
             self.store["decoder_buffers"].finished_sum_host,
             "finish_reasons_host":
