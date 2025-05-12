@@ -226,9 +226,9 @@ class LlmRequest(tensorrt_llm.bindings.internal.batch_manager.LlmRequest):
         super().__init__(
             *args,
             client_id=client_id,
-            return_log_probs=False,
-            return_context_logits=False,
-            return_generation_logits=False,
+            return_log_probs=return_log_probs,
+            return_context_logits=return_context_logits,
+            return_generation_logits=return_generation_logits,
             stop_words_list=torch.tensor(stop_words_list, dtype=torch.int32)
             if stop_words_list else None,
             **kwargs)

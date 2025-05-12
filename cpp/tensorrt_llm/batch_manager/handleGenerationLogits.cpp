@@ -118,6 +118,8 @@ void HandleGenerationLogits::operator()(SizeType32 logitsIndex, RequestVector co
                     || modelConfig.getSpeculativeDecodingMode().isDraftTokensExternal(),
                 "Only speculative decoding with external draft tokens supports returning generation logits");
 
+            std::cout << "getReturnGenerationLogits" << std::endl;
+
             // Push into fragments vector
             llmReq->addGenerationLogitsFragment(logitsView);
             TLLM_CHECK(

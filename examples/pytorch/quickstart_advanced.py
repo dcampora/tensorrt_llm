@@ -8,9 +8,9 @@ from tensorrt_llm.llmapi import (EagleDecodingConfig, KvCacheConfig,
 
 example_prompts = [
     "Hello, my name is",
-    "The president of the United States is",
-    "The capital of France is",
-    "The future of AI is",
+    # "The president of the United States is",
+    # "The capital of France is",
+    # "The future of AI is",
 ]
 
 
@@ -167,6 +167,7 @@ def setup_llm(args):
         temperature=args.temperature,
         top_k=args.top_k,
         top_p=args.top_p,
+        return_generation_logits=True,
     )
     return llm, sampling_params
 
@@ -181,7 +182,9 @@ def main():
     for i, output in enumerate(outputs):
         prompt = output.prompt
         generated_text = output.outputs[0].text
+        generation_logits = output.outputs[0].generation_logits
         print(f"[{i}] Prompt: {prompt!r}, Generated text: {generated_text!r}")
+        print(f"[{i}] Generation logits: {generation_logits!r}")
 
 
 if __name__ == '__main__':

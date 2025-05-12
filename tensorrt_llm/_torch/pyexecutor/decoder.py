@@ -236,6 +236,7 @@ class TorchDecoder(Decoder):
             token_idx += num_tokens
 
         def handle_logits(request: LlmRequest, count=1):
+            nonlocal request_idx
             if decoder_state.logits is None:
                 return
             if not request.py_return_generation_logits and not request.py_return_log_probs:
@@ -245,6 +246,7 @@ class TorchDecoder(Decoder):
             current_logits = decoder_state.logits[current_slice]
 
             request.py_result.append_generation_logits(current_logits)
+            print(f"[{request_idx}] Logits: {current_logits.shape}")
 
             if not request.py_return_log_probs:
                 return
@@ -651,6 +653,15 @@ class TRTLLMDecoder(Decoder):
             seq_slot = request.seq_slot
             num_generated_tokens = request.num_draft_tokens + 1
             current_num_of_tokens = request.max_beam_num_tokens
+
+            # Handle logits
+            # Print return_generation_logits opt for debug
+            print(f"return_generation_logits: {request.return_generation_logits}")
+            if self.store["decoder_buffers"].logits is not None and (request.py_return_generation_logits or request.py_return_log_probs) and request.generation_logits is not None:
+                # logits = self.store["decoder_buffers"].logits[seq_slot]
+                # request.py_result.append_generation_logits(logits)
+                logits = request.generation_logits
+                print(f"[{seq_slot}] Logits: {logits!r}")
 
             num_new_tokens = [0] * self.beam_width
             num_dropped_tokens = [0] * self.beam_width

@@ -236,6 +236,22 @@ void initBindings(pybind11::module_& m)
         .def_property_readonly("return_context_logits", &GenLlmReq::getReturnContextLogits)
         .def_property_readonly("return_generation_logits", &GenLlmReq::getReturnGenerationLogits)
         .def_property_readonly("log_probs", py::overload_cast<>(&GenLlmReq::getLogProbs, py::const_))
+        .def_property_readonly("context_logits", [](GenLlmReq& self) {
+            at::Tensor value;
+            auto const& tensor = self.getContextLogitsHost();
+            if (tensor) {
+                value = tr::Torch::tensor(tensor);
+            }
+            return value;
+        })
+        .def_property_readonly("generation_logits", [](GenLlmReq& self) {
+            at::Tensor value;
+            auto const& tensor = self.getGenerationLogitsHost();
+            if (tensor) {
+                value = tr::Torch::tensor(tensor);
+            }
+            return value;
+        })
         .def("get_log_probs", py::overload_cast<GenLlmReq::SizeType32>(&GenLlmReq::getLogProbs, py::const_))
         .def("set_log_probs", &GenLlmReq::setLogProbs, py::arg("log_probs"), py::arg("beam"))
         .def("set_return_encoder_output", &GenLlmReq::setReturnEncoderOutput, py::arg("return_encoder_output"))
@@ -479,7 +495,17 @@ void initBindings(pybind11::module_& m)
                  runtime::BufferManager const&, runtime::ModelConfig const&, runtime::WorldConfig const&>(),
             py::arg("max_num_sequences"), py::arg("max_beam_width"), py::arg("max_attention_window"),
             py::arg("max_tokens_per_step"), py::arg("buffer_manager"), py::arg("model_config"), py::arg("world_config"))
-        .def_readwrite("logits", &tb::DecoderBuffers::logits)
+        .def_property_readonly("logits", [](tb::DecoderBuffers& self) {
+            std::vector<at::Tensor> logits;
+            logits.reserve(self.logits.size());
+            for (auto& slot : self.logits)
+            {
+                if (slot != nullptr) {
+                    logits.push_back(tr::Torch::tensor(slot));
+                }
+            }
+            return logits;
+        })
         .def_readwrite("cache_indirection_input", &tb::DecoderBuffers::cacheIndirectionInput)
         .def_readwrite("cache_indirection_output", &tb::DecoderBuffers::cacheIndirectionOutput)
         .def_readwrite("draft_buffers", &tb::DecoderBuffers::draftBuffers);

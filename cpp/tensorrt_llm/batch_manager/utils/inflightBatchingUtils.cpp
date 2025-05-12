@@ -111,6 +111,8 @@ void copyGenerationLogits(RuntimeBuffers::GenerationLogitsCache& generationLogit
         auto beamDeviceTensorPtr = ITensor::slice(transposeBufferPtr, {beam, 0}, beamFragmentSize);
         // [beamWidth, mMaxNewTokens, vocabSizePadded] -> [beamFragmentSize, vocabSizePadded]
         auto beamHostTensorPtr = ITensor::slice(llmReq.getGenerationLogitsHost(), {beam, hostOffset}, beamFragmentSize);
+        // Print with std cout
+        std::cout << "copying logits from device to host" << std::endl;
         bufferManager.copy(*beamDeviceTensorPtr, *beamHostTensorPtr);
     }
 
