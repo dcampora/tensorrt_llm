@@ -181,7 +181,7 @@ def run_disaggregated_test(example_dir,
                            poll_procs=[workers_proc, server_proc])
 
                 # Run the chat completion endpoint test only for TinyLlama
-                if test_desc == "overlap" or test_desc == "trtllm_sampler":
+                if test_desc in ["overlap", "trtllm_sampler"]:
                     chat_client_cmd = client_cmd + [
                         '-e', 'chat', '-o', 'output_chat.json'
                     ]
@@ -200,7 +200,7 @@ def run_disaggregated_test(example_dir,
                 not_expected_strings = ["Berlin Berlin"]
 
                 output_files = ['output.json', 'output_streaming.json']
-                if test_desc == "overlap" or test_desc == "trtllm_sampler":
+                if test_desc in ["overlap", "trtllm_sampler"]:
                     # Disable streaming chat completion for overlap test
                     # due to bug
                     output_files.extend(['output_chat.json'])
