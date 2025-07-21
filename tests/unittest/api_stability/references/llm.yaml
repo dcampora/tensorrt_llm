@@ -84,7 +84,7 @@ methods:
       enable_mixed_sampler:
         annotation: bool
         default: False
-      enable_trtllm_sampler:
+      enable_torch_sampler:
         annotation: bool
         default: False
       kv_cache_dtype:
