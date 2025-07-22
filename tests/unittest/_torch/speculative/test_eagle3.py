@@ -59,6 +59,7 @@ def test_llama_eagle3(use_cuda_graph: bool, attn_backend: str,
         # that the draft model won't go above its max in warmup
         # in this test.
         max_seq_len=8192,
+        enable_torch_sampler=True,
     )
 
     spec_config = EagleDecodingConfig(
