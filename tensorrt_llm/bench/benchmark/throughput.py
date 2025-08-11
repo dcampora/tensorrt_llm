@@ -410,7 +410,9 @@ def throughput_command(
         sampling_params = SamplingParams(end_id=eos_id,
                                          pad_id=eos_id,
                                          n=beam_width,
-                                         use_beam_search=beam_width > 1)
+                                         use_beam_search=beam_width > 1,
+                                         temperature=0.5,
+                                         top_p=0.9)
         post_proc_params = None  # No detokenization
 
         # Perform warmup if requested.
